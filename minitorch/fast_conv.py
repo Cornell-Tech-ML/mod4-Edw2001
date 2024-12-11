@@ -7,8 +7,6 @@ from numba import njit as _njit
 from .autodiff import Context
 from .tensor import Tensor
 from .tensor_data import (
-    MAX_DIMS,
-    Index,
     Shape,
     Strides,
     Storage,
@@ -91,7 +89,24 @@ def _tensor_conv1d(
     s2 = weight_strides
 
     # TODO: Implement for Task 4.1.
-    raise NotImplementedError("Need to implement for Task 4.1")
+    for i in prange(out_size):
+        out_idx = np.zeros(3, dtype=np.int32)
+        to_index(i, out_shape, out_idx)
+        b, oc, pos = out_idx[0], out_idx[1], out_idx[2]
+
+        acc = 0.0
+        for ic in range(in_channels):
+            for k in range(kw):
+                if reverse:
+                    i_pos = pos - k
+                else:
+                    i_pos = pos + k
+                if 0 <= i_pos < width:
+                    in_p = b * s1[0] + ic * s1[1] + i_pos * s1[2]
+                    w_p = oc * s2[0] + ic * s2[1] + k * s2[2]
+                    acc += input[in_p] * weight[w_p]
+
+        out[i] = acc
 
 
 tensor_conv1d = njit(_tensor_conv1d, parallel=True)
@@ -220,7 +235,28 @@ def _tensor_conv2d(
     s20, s21, s22, s23 = s2[0], s2[1], s2[2], s2[3]
 
     # TODO: Implement for Task 4.2.
-    raise NotImplementedError("Need to implement for Task 4.2")
+    for i in prange(out_size):
+        out_idx = np.zeros(4, dtype=np.int32)
+        to_index(i, out_shape, out_idx)
+        b, oc, oh, ow = out_idx[0], out_idx[1], out_idx[2], out_idx[3]
+
+        acc = 0.0
+        for ic in range(in_channels):
+            for r in range(kh):
+                for c in range(kw):
+                    if reverse:
+                        i_h = oh - r
+                        i_w = ow - c
+                    else:
+                        i_h = oh + r
+                        i_w = ow + c
+
+                    if (0 <= i_h < height) and (0 <= i_w < width):
+                        in_p = b * s10 + ic * s11 + i_h * s12 + i_w * s13
+                        w_p = oc * s20 + ic * s21 + r * s22 + c * s23
+                        acc += input[in_p] * weight[w_p]
+
+        out[i] = acc
 
 
 tensor_conv2d = njit(_tensor_conv2d, parallel=True, fastmath=True)
