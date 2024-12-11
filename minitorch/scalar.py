@@ -91,6 +91,36 @@ class Scalar:
     def __rmul__(self, b: ScalarLike) -> Scalar:
         return self * b
 
+    def __add__(self, b: ScalarLike) -> Scalar:
+        return Add.apply(self, b)
+
+    def __lt__(self, b: ScalarLike) -> Scalar:
+        return LT.apply(self, b)
+
+    def __gt__(self, b: ScalarLike) -> Scalar:
+        return LT.apply(b, self)
+
+    def __sub__(self, b: ScalarLike) -> Scalar:
+        return Add.apply(self, Neg.apply(b))
+
+    def __neg__(self) -> Scalar:
+        return Neg.apply(self)
+
+    def log(self) -> Scalar:
+        return Log.apply(self)
+
+    def exp(self) -> Scalar:
+        return Exp.apply(self)
+
+    def sigmoid(self) -> Scalar:
+        return Sigmoid.apply(self)
+
+    def relu(self) -> Scalar:
+        return ReLU.apply(self)
+
+    def __eq__(self, b: ScalarLike) -> Scalar:
+        return EQ.apply(self, b)
+
     # Variable elements for backprop
 
     def accumulate_derivative(self, x: Any) -> None:
@@ -116,7 +146,6 @@ class Scalar:
 
     @property
     def parents(self) -> Iterable[Variable]:
-        """Get the variables used to create this one."""
         assert self.history is not None
         return self.history.inputs
 
@@ -126,7 +155,9 @@ class Scalar:
         assert h.last_fn is not None
         assert h.ctx is not None
 
-        raise NotImplementedError("Need to include this file from past assignment.")
+        # TODO: Implement for Task 1.3.
+        derivate = h.last_fn._backward(h.ctx, d_output)
+        return zip(h.inputs, derivate)
 
     def backward(self, d_output: Optional[float] = None) -> None:
         """Calls autodiff to fill in the derivatives for the history of this object.
@@ -140,8 +171,6 @@ class Scalar:
         if d_output is None:
             d_output = 1.0
         backpropagate(self, d_output)
-
-    raise NotImplementedError("Need to include this file from past assignment.")
 
 
 def derivative_check(f: Any, *scalars: Scalar) -> None:

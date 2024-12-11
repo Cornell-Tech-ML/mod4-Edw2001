@@ -11,7 +11,10 @@ import minitorch
 class Network(minitorch.Module):
     def __init__(self, hidden_layers):
         super().__init__()
-        raise NotImplementedError("Need to include this file from past assignment.")
+        # TODO: Implement for Task 1.5.
+        self.layer1 = Linear(2, hidden_layers)
+        self.layer2 = Linear(hidden_layers, hidden_layers)
+        self.layer3 = Linear(hidden_layers, 1)
 
     def forward(self, x):
         middle = [h.relu() for h in self.layer1.forward(x)]
@@ -40,8 +43,22 @@ class Linear(minitorch.Module):
             )
 
     def forward(self, inputs):
-        raise NotImplementedError("Need to include this file from past assignment.")
+        # TODO: Implement for Task 1.5.
+        outputs = []
+        num_outputs = len(self.bias)
+        num_inputs = len(inputs)
 
+        for output_index in range(num_outputs):
+            total = self.bias[output_index].value
+
+            for input_index in range(num_inputs):
+                input_value = inputs[input_index]
+                weight_value = self.weights[input_index][output_index].value
+                total += input_value * weight_value
+
+            outputs.append(total)
+
+        return outputs
 
 def default_log_fn(epoch, total_loss, correct, losses):
     print("Epoch ", epoch, " loss ", total_loss, "correct", correct)
